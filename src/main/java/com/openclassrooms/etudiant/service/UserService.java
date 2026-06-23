@@ -33,6 +33,16 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void delete(Long id) {
+        Assert.notNull(id, "User id must not be null");
+        log.info("Deleting user");
+
+        if (!userRepository.existsById(id)) {
+            throw new IllegalArgumentException("User with id " + id + " does not exist");
+        }
+        userRepository.deleteById(id);
+    }
+
     public String login(String login, String password) {
         Assert.notNull(login, "Login must not be null");
         Assert.notNull(password, "Password must not be null");

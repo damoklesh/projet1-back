@@ -20,6 +20,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -27,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @Testcontainers
 public class UserControllerTest {
 
-    private static final String URL = "/api/register";
+    private static final String REGISTER_URL = "/api/register";
+    private static final String DELETE_URL = "/api/users/{id}";
     private static final String FIRST_NAME = "John";
     private static final String LAST_NAME = "Doe";
     private static final String LOGIN = "login";
@@ -35,7 +37,7 @@ public class UserControllerTest {
 
 
     @Container
-    static MySQLContainer mySQLContainer = new MySQLContainer("mysql:latest");
+    static MySQLContainer mySQLContainer = new MySQLContainer("mysql:8.0.36");
 
     @Autowired
     private UserService userService;
@@ -66,7 +68,7 @@ public class UserControllerTest {
         RegisterDTO registerDTO = new RegisterDTO();
 
         // WHEN
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        mockMvc.perform(MockMvcRequestBuilders.post(REGISTER_URL)
                         .content(objectMapper.writeValueAsString(registerDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -91,7 +93,7 @@ public class UserControllerTest {
         registerDTO.setPassword(PASSWORD);
 
         // WHEN
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        mockMvc.perform(MockMvcRequestBuilders.post(REGISTER_URL)
                         .content(objectMapper.writeValueAsString(registerDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -109,11 +111,43 @@ public class UserControllerTest {
         registerDTO.setPassword(PASSWORD);
 
         // WHEN
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        mockMvc.perform(MockMvcRequestBuilders.post(REGISTER_URL)
                         .content(objectMapper.writeValueAsString(registerDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isCreated());
+    }
+
+    @Test
+    public void deleteUserSuccessful() throws Exception {
+        // GIVEN
+        User user = new User();
+        user.setFirstName(FIRST_NAME);
+        user.setLastName(LAST_NAME);
+        user.setLogin(LOGIN);
+        user.setPassword(PASSWORD);
+        User savedUser = userRepository.save(user);
+
+        // WHEN
+        mockMvc.perform(MockMvcRequestBuilders.delete(DELETE_URL, savedUser.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+
+        // THEN
+        assertThat(userRepository.existsById(savedUser.getId())).isFalse();
+    }
+
+    @Test
+    public void deleteUnknownUser() throws Exception {
+        // GIVEN
+        Long unknownUserId = 1L;
+
+        // WHEN
+        mockMvc.perform(MockMvcRequestBuilders.delete(DELETE_URL, unknownUserId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 }
