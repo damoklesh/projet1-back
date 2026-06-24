@@ -1,0 +1,13 @@
+package com.openclassrooms.etudiant.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class LoginResponseDTO {
+    private String token;
+    private String type;
+    private long expiresIn;
+    private String username;
+}

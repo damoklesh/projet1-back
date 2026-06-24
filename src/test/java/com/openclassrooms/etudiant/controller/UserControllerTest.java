@@ -1,6 +1,7 @@
 package com.openclassrooms.etudiant.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openclassrooms.etudiant.dto.LoginRequestDTO;
 import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.dto.UserUpdateDTO;
 import com.openclassrooms.etudiant.entities.User;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 public class UserControllerTest {
 
     private static final String REGISTER_URL = "/api/register";
+    private static final String LOGIN_URL = "/api/login";
     private static final String FIND_ALL_URL = "/api/users";
     private static final String FIND_BY_ID_URL = "/api/users/{id}";
     private static final String UPDATE_URL = "/api/users/{id}";
@@ -66,6 +68,7 @@ public class UserControllerTest {
         registry.add("spring.datasource.password", () -> mySQLContainer.getPassword());
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
         registry.add("application.security.jwt.secret-key", () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        registry.add("application.security.jwt.expiration", () -> "3600000");
 
     }
 
@@ -129,6 +132,33 @@ public class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isCreated());
+    }
+
+    @Test
+    public void loginUserSuccessful() throws Exception {
+        // GIVEN
+        User user = new User();
+        user.setFirstName(FIRST_NAME);
+        user.setLastName(LAST_NAME);
+        user.setLogin(LOGIN);
+        user.setPassword(PASSWORD);
+        userService.register(user);
+
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setLogin(LOGIN);
+        loginRequestDTO.setPassword(PASSWORD);
+
+        // WHEN
+        mockMvc.perform(MockMvcRequestBuilders.post(LOGIN_URL)
+                        .content(objectMapper.writeValueAsString(loginRequestDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.token").isNotEmpty())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.type").value("Bearer"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.expiresIn").value(3600))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.username").value(LOGIN));
     }
 
     @Test

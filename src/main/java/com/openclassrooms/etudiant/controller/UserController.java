@@ -1,11 +1,13 @@
 package com.openclassrooms.etudiant.controller;
 
 import com.openclassrooms.etudiant.dto.LoginRequestDTO;
+import com.openclassrooms.etudiant.dto.LoginResponseDTO;
 import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.dto.UserResponseDTO;
 import com.openclassrooms.etudiant.dto.UserUpdateDTO;
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.mapper.UserDtoMapper;
+import com.openclassrooms.etudiant.service.JwtService;
 import com.openclassrooms.etudiant.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class UserController {
 
     private final UserService userService;
     private final UserDtoMapper userDtoMapper;
+    private final JwtService jwtService;
 
     @PostMapping("/api/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO registerDTO) {
@@ -61,9 +64,14 @@ public class UserController {
     }
 
     @PostMapping("/api/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
         String jwtToken = userService.login(loginRequestDTO.getLogin(), loginRequestDTO.getPassword());
-        return ResponseEntity.ok(jwtToken);
+        LoginResponseDTO loginResponseDTO = new LoginResponseDTO(
+                jwtToken,
+                "Bearer",
+                jwtService.getExpirationInSeconds(),
+                loginRequestDTO.getLogin());
+        return ResponseEntity.ok(loginResponseDTO);
     }
 
 
