@@ -162,6 +162,22 @@ public class UserControllerTest {
     }
 
     @Test
+    public void loginInvalidCredentials() throws Exception {
+        // GIVEN
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setLogin(LOGIN);
+        loginRequestDTO.setPassword(PASSWORD);
+
+        // WHEN
+        mockMvc.perform(MockMvcRequestBuilders.post(LOGIN_URL)
+                        .content(objectMapper.writeValueAsString(loginRequestDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
     public void findAllUsersWithoutAuthentication() throws Exception {
         // WHEN
         mockMvc.perform(MockMvcRequestBuilders.get(FIND_ALL_URL)
@@ -250,6 +266,22 @@ public class UserControllerTest {
         assertThat(updatedUser.getLastName()).isEqualTo(UPDATED_LAST_NAME);
         assertThat(updatedUser.getLogin()).isEqualTo(UPDATED_LOGIN);
         assertThat(updatedUser.getPassword()).isNotEqualTo("new-password");
+    }
+
+    @Test
+    public void updateUserWithoutRequiredData() throws Exception {
+        // GIVEN
+        User savedUser = userRepository.save(getUser(LOGIN));
+        UserUpdateDTO userUpdateDTO = new UserUpdateDTO();
+
+        // WHEN
+        mockMvc.perform(MockMvcRequestBuilders.put(UPDATE_URL, savedUser.getId())
+                        .header(AUTHORIZATION, getBearerToken(savedUser))
+                        .content(objectMapper.writeValueAsString(userUpdateDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
     @Test

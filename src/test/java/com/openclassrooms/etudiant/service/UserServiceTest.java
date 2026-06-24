@@ -152,6 +152,88 @@ public class UserServiceTest {
         assertThat(result.getPassword()).isEqualTo("ENCODED_NEW_PASSWORD");
     }
 
+    @Test
+    public void test_update_user_without_password_keeps_existing_password() {
+        // GIVEN
+        Long userId = 1L;
+        User existingUser = getUser(LOGIN);
+        User userToUpdate = getUser(LOGIN);
+        userToUpdate.setFirstName("Jane");
+        userToUpdate.setLastName("Smith");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // WHEN
+        User result = userService.update(userId, userToUpdate, null);
+
+        // THEN
+        assertThat(result.getFirstName()).isEqualTo("Jane");
+        assertThat(result.getLastName()).isEqualTo("Smith");
+        assertThat(result.getLogin()).isEqualTo(LOGIN);
+        assertThat(result.getPassword()).isEqualTo(PASSWORD);
+    }
+
+    @Test
+    public void test_delete_unknown_user_throws_IllegalArgumentException() {
+        // GIVEN
+        Long userId = 1L;
+        when(userRepository.existsById(userId)).thenReturn(false);
+
+        // THEN
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> userService.delete(userId));
+    }
+
+    @Test
+    public void test_delete_user() {
+        // GIVEN
+        Long userId = 1L;
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        // WHEN
+        userService.delete(userId);
+
+        // THEN
+        verify(userRepository).deleteById(userId);
+    }
+
+    @Test
+    public void test_login_user() {
+        // GIVEN
+        User user = getUser(LOGIN);
+        when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, user.getPassword())).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("JWT_TOKEN");
+
+        // WHEN
+        String token = userService.login(LOGIN, PASSWORD);
+
+        // THEN
+        assertThat(token).isEqualTo("JWT_TOKEN");
+    }
+
+    @Test
+    public void test_login_unknown_user_throws_IllegalArgumentException() {
+        // GIVEN
+        when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.empty());
+
+        // THEN
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> userService.login(LOGIN, PASSWORD));
+    }
+
+    @Test
+    public void test_login_invalid_password_throws_IllegalArgumentException() {
+        // GIVEN
+        User user = getUser(LOGIN);
+        when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, user.getPassword())).thenReturn(false);
+
+        // THEN
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> userService.login(LOGIN, PASSWORD));
+    }
+
     private User getUser(String login) {
         User user = new User();
         user.setFirstName(FIRST_NAME);
