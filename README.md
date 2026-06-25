@@ -115,6 +115,21 @@ Pour exécuter les tests Junit, il faut :
 mvn clean test
 ```
 
+Cette commande génère aussi un rapport de couverture de code JaCoCo au format HTML.
+Le rapport est disponible ici :
+
+```
+target/site/jacoco/index.html
+```
+
+Le rapport exclut les classes techniques ou générées suivantes afin de mesurer principalement la couverture du code applicatif :
+- `configuration`
+- `dto`
+- `entities`
+- `handler`
+- `mapper`
+- `EtudiantBackendApplication`
+
 ## Fonctionnalités portées
 
     - API de création d'un utilisateur (agent de la bibliothèque)

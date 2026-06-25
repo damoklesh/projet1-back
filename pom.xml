@@ -32,6 +32,7 @@
 		<lombok.version>1.18.32</lombok.version>
 		<testcontainers.version>1.20.0</testcontainers.version>
 		<jjwt.version>0.12.6</jjwt.version>
+		<jacoco.version>0.8.13</jacoco.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -98,6 +99,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.jacoco</groupId>
+			<artifactId>org.jacoco.agent</artifactId>
+			<version>${jacoco.version}</version>
+			<classifier>runtime</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
@@ -158,6 +166,33 @@
 					</excludes>
 				</configuration>
 
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<configuration>
+					<excludes>
+						<exclude>com/openclassrooms/etudiant/EtudiantBackendApplication*</exclude>
+						<exclude>com/openclassrooms/etudiant/dto/**</exclude>
+						<exclude>com/openclassrooms/etudiant/entities/**</exclude>
+						<exclude>com/openclassrooms/etudiant/handler/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
